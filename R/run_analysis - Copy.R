@@ -13,7 +13,7 @@
 #' @export
 #' @import dplyr openxlsx
 
-run_analysis <- function(data = NULL,
+run_analysis <- function(data = data,
                          media.thres = 500,
                          FC_thres = 2,
                          path.result = getwd(),
@@ -66,16 +66,28 @@ run_analysis <- function(data = NULL,
 
     result.table$Presence_in_media <- factor(result.table$Presence_in_media, levels = c("Present", "Absent", "Non-significant"))
 
-    filename <- paste0(path.result, "Volcano_plot_", i, ".png")
-    plot_title <- paste0("Volcano plot for ", i )
+    p.x.position <- max(result.table$log2FC) - 0.5
 
-    plot_volcano(datatable = result.table,
-                 filename = filename,
-                 title = plot_title,
-                 FC_thres = FC_thres,
-                 p.cut.off = p.cut.off,
-                 max.overlaps = max.overlaps,
-                 color.manual = color.manual)
+    p <-
+      ggplot( data = result.table,
+              aes( x = log2FC, y = log10p)) +
+      geom_point( aes( color = Presence_in_media, text = variable),
+                  alpha = 0.8, show.legend = TRUE ) +
+      ggrepel::geom_text_repel( aes( label = label),
+                                max.overlaps = max.overlaps, size = 2.5 ) +
+      scale_color_manual( values = color.manual, drop = FALSE ) +
+      geom_text( aes( p.x.position, -log10(p.cut.off), label = paste0("p=", p.cut.off), vjust = 1.5),
+                 size = 3, col = "black") +
+      geom_hline( yintercept = -log10(p.cut.off), col = "black") +
+      theme_bw() +
+      #ylim(0, max(-log10(data.plot.f$adj.p.value))+0.5) +
+      #xlim(min(data.plot.f$estimate)-0.5, max(data.plot.f$estimate)+0.5) +
+      labs(x = "log2(FC)",
+           y = "-log10(p value)",
+           title = paste0("Volcano plot for ", i )) +
+      guides(color = guide_legend(title="Presence in media"))
+
+    ggsave(filename = paste0(path.result, "Volcano_plot_", i, ".png"), p, width = 7, height = 5, dpi = 300)
 
     result.table <-
       result.table %>%

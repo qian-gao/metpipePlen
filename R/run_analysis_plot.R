@@ -40,6 +40,15 @@ run_analysis <- function(data = NULL,
     unique(data.i$Group)
     data.i$Group <- factor(data.i$Group, levels = c("MOCK", i))
 
+    mean_gene <-
+      apply(data.i %>%
+              filter(Group != "MOCK") %>%
+              select(-c(Sample.name, Group)),
+            2,
+            function(x){mean(x, na.rm = TRUE)}) %>%
+      as.data.frame() %>%
+      rename(mean.cell = ".")
+
     result <-
       compute_t( data = data.i,
                  formula = "~ Group",
@@ -47,7 +56,7 @@ run_analysis <- function(data = NULL,
                  map.names = map.names)
 
     result.table <-
-      result$coef.tbl.all %>%
+      cbind(result$coef.tbl.all, mean_gene) %>%
       dplyr::rename(log2FC = estimate,
                     Gene = coefficient) %>%
       mutate(Gene = gsub("Group", "", Gene),
