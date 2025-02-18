@@ -10,13 +10,17 @@
 #' @return A data frame object that contains a summary of a sample that
 #'     can later be converted to a TeX output using \code{overview_print}
 #' @examples
-#'
+#' @importFrom VIM kNN
+#' @importFrom laeken weightedMean
 #' @export
 
 impute_various_methods <-
   function(
     x,
-    method = NULL
+    method = NULL,
+    k = 5,
+    missing_thres = 0.2,
+    sample.info = NULL
   ) {
 
     missings_nr <- sum( is.na(x) | x <= 0 )
@@ -76,6 +80,43 @@ impute_various_methods <-
                                  return(x)
                                })
 
+    } else if (method == "knn") {
+      # if missing < 20% for each group, apply knn, otherwise LoD
+
+      if (!is.null(sample.info)){
+        grps <- unique(sample.info$Group)
+      } else {
+        sample.info <-
+          data.frame(Group = "Group 0")
+
+        grps <- unique(sample.info$Group)
+      }
+
+
+      x_imputed <- x
+      for (i in grps){
+        row.index <- sample.info$Group == i
+        data.i <- x[row.index, , drop = FALSE]
+        nrow <- nrow(data.i)
+
+        col.index <- apply(data.i, 2, function(x) {sum(is.na(x) | x <= 0) < missing_thres * nrow})
+
+        x_imputed[row.index, col.index] <-
+          kNN(x_imputed[row.index, col.index, drop = FALSE],
+              variable = colnames(x_imputed[row.index, col.index, drop = FALSE]),
+              k = k, numFun = weightedMean, weightDist=TRUE, imp_var = FALSE)
+
+      }
+
+      x_imputed <-
+        apply(x_imputed, 2,
+              function(x){
+                miss <- which( is.na(x) | x <= 0 )
+                if (sum(miss) > 0) {
+                  x[ miss ] <- 0.2*min(x[-miss], na.rm = TRUE)
+                }
+                return(x)
+              })
     }
 
     x_imputed <- data.frame(x_imputed)
