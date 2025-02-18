@@ -1,4 +1,4 @@
-#' @title plot_volcano
+#' @title plot_volcano_bubble
 #'
 #' @description Provides an overview table for the time and scope conditions of
 #'     a data set
@@ -16,7 +16,7 @@
 #' @export
 #' @import ggplot2 ggrepel openxlsx
 
-plot_volcano <- function(datatable = NULL,
+plot_volcano_bubble <- function(datatable = NULL,
                          filename = NULL,
                          title = NULL,
                          FC_thres = NULL,
@@ -30,7 +30,12 @@ plot_volcano <- function(datatable = NULL,
     p <-
       ggplot( data = datatable,
               aes( x = log2FC, y = log10p)) +
-      geom_point( aes( color = Presence_in_media, text = variable),
+      geom_point( data = datatable[datatable$Presence_in_media == "Present", ],
+                    aes( color = Presence_in_media, text = variable,
+                         size = ratio_cell_media_log2),
+                  alpha = 0.8, show.legend = TRUE ) +
+      geom_point( data = datatable[datatable$Presence_in_media != "Present", ],
+                  aes( color = Presence_in_media, text = variable),
                   alpha = 0.8, show.legend = TRUE ) +
       ggrepel::geom_text_repel( aes( label = label),
                                 max.overlaps = max.overlaps, size = 2.5 ) +

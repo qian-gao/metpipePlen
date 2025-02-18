@@ -1,4 +1,4 @@
-#' @title run_analysis
+#' @title run_analysis_plot
 #'
 #' @description Provides an overview table for the time and scope conditions of
 #'     a data set
@@ -13,7 +13,7 @@
 #' @export
 #' @import dplyr openxlsx
 
-run_analysis <- function(data = NULL,
+run_analysis_plot <- function(data = NULL,
                          media.thres = 500,
                          FC_thres = 2,
                          path.result = getwd(),
@@ -45,7 +45,7 @@ run_analysis <- function(data = NULL,
               filter(Group != "MOCK") %>%
               select(-c(Sample.name, Group)),
             2,
-            function(x){mean(x, na.rm = TRUE)}) %>%
+            function(x){log2(mean(2^x, na.rm = TRUE))}) %>%
       as.data.frame() %>%
       rename(mean.cell = ".")
 
@@ -62,7 +62,7 @@ run_analysis <- function(data = NULL,
       mutate(Gene = gsub("Group", "", Gene),
              FC = 2^log2FC,
              log10p = -log10(adj.p.value)) %>%
-      left_join(feature.info[, c("Identity_mode","mean.MEDIA")],
+      left_join(feature.info[, c("Identity_mode","mean.MEDIA","mean.MEDIA.norm")],
                 by = c("variable" = "Identity_mode")) %>%
       mutate(In_media = mean.MEDIA > media.thres,
              FC_over_thres = FC > FC_thres,
@@ -70,15 +70,19 @@ run_analysis <- function(data = NULL,
                                             !In_media & FC_over_thres & adj.p.value < p.cut.off ~ "Absent",
                                             TRUE ~ "Non-significant"
              ),
-             label = if_else(FC_over_thres & adj.p.value < p.cut.off, variable, "")) %>%
+             label = if_else(FC_over_thres & adj.p.value < p.cut.off, variable, ""),
+             ratio_cell_media_log2 = if_else(Presence_in_media == "Present",
+                                             mean.cell - mean.MEDIA.norm,
+                                             NA)
+             ) %>%
       select(-c(AveExpr, B))
 
     result.table$Presence_in_media <- factor(result.table$Presence_in_media, levels = c("Present", "Absent", "Non-significant"))
 
-    filename <- paste0(path.result, "Volcano_plot_", i, ".png")
+    filename <- paste0(path.result, "Volcano_plot_", i, ".svg")
     plot_title <- paste0("Volcano plot for ", i )
-
-    plot_volcano(datatable = result.table,
+    datatable = result.table
+    plot_volcano_bubble(datatable = result.table,
                  filename = filename,
                  title = plot_title,
                  FC_thres = FC_thres,
