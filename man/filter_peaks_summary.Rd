@@ -14,32 +14,34 @@ filter_peaks_summary(
 )
 }
 \arguments{
-\item{XCMSnExp}{A XCMSnExp object. If null, peaktable should be mandatory}
+\item{XCMSnExp}{A XCMSnExp object. If null, peaktable should be mandatory.}
 
 \item{peaktable}{A dataframe of peaktable, feature x sample. If null, XCMSnExp
-should be mandatory}
+should be mandatory.}
 
-\item{sample.type}{A vector indicating sample types}
+\item{sample.type}{A vector indicating sample types.}
 
-\item{rt.range}{Retention time range for keeping features}
+\item{rsd.filter}{A list of threshold for keeping features based on their rsd in QCs.
+e.g. c( 1, "QC", "<", 0.3).}
 
-\item{bl.thres}{Threshold for keeping features based on their values in one
-type of sample compared to blanks. e.g. c( 3, "BL", "<", "PO")}
+\item{rt.range}{Retention time range for keeping features. e.g. c(0.5, 30).}
 
-\item{rsd.po.thres}{Threshold for keeping features based on their rsd in pools.
-e.g. c( "PO", "<", 40)}
-
-\item{mean.po.thres}{Threshold for keeping features based on their mean in pools.
-e.g. c( "PO", ">", 1000)}
-
-\item{mean.thres}{Threshold for keeping features based on their mean values in
-certain types. e.g. list( c( "PO100", ">", 1, "PO25"),
-c( "PO25", ">", 1, "PO12.5") )}
+\item{mean.filter}{A list of threshold for keeping features based on their mean in QCs
+or other sample types. e.g. list( c( 1, "PO", ">", "1000"),
+c( 1, "PO100", ">", "PO50") ).}
 }
 \value{
-A data frame object that contains filtered peaktable and summary statistics
+A data frame object that contains filtered peaktable and summary statistics.
 }
 \description{
-Provides an overview table for the time and scope conditions of
-a data set
+Filter the peaks based on different criteria and generate summary
+statistics.
+}
+\examples{
+filter_peaks_summary( peaktable = peaks,
+                                sample.type = sample.info.pos$Sample.type,
+                                rsd.filter = c( 1, "QC", "<", 0.3),
+                                mean.filter = c(1, "QC", ">", 500),
+                                rt.range = c(0.5, 30))
+
 }

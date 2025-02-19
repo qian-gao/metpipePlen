@@ -1,16 +1,17 @@
 #' @title calculate_summary
 #'
-#' @description Calculate summary for subsets of dataset
+#' @description Calculate summary for subsets of dataset.
 #'
-#' @param data A data frame object, sample x feature
-#' @param type A vector indicating sample types
-#' @param impute If impute missing values
-#' @param names.suffix Suffix to add on output variable names
-#' @param other.eval If calculate other summary (MAD and VAR)
+#' @param data A data frame object, sample x feature.
+#' @param type A vector indicating sample types.
+#' @param impute TRUE/FALSE, if impute missing values, if TRUE, half minimum is imputed.
+#' @param names.suffix Suffix to add to the output variable names.
+#' @param other.eval TRUE/FALSE, if calculate other summary (MAD and VAR).
 #'
-#' @return A list of summaries for all types of samples
-#'
-#' @examples
+#' @return A list of summaries for all types of samples.
+#' @examples calculate_summary( data = data.norm,
+#'                              type = sample.info.neg$Sample.type,
+#'                              names.suffix = "norm")
 #'
 #' @export
 #' @importFrom dplyr "%>%" mutate left_join arrange select summarise group_by

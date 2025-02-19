@@ -9,19 +9,25 @@ mzrt_filter(mzrt = NULL, index = NULL)
 mzrt_filter(mzrt = NULL, index = NULL)
 }
 \arguments{
-\item{mzrt}{A list of dataframe or vectors containing peaktable, feature.info}
+\item{mzrt}{A list of dataframe or vectors containing peaktable, feature.info.}
 
-\item{index}{Index of features to remove}
+\item{index}{Index of features to remove.}
 }
 \value{
-A list of filtered dataframe or vectors
+A list of filtered dataframe or vectors.
 
-A list of filtered dataframe or vectors
+A list of filtered dataframe or vectors.
 }
 \description{
-Provides an overview table for the time and scope conditions of
-a data set
+Apply the filter to all the elements in a list.
 
-Provides an overview table for the time and scope conditions of
-a data set
+Apply the filter to all the elements in a list.
+}
+\examples{
+mzrt_filter( mzrt = list,
+                       index = index)
+
+mzrt_filter( mzrt = list,
+                       index = index)
+
 }

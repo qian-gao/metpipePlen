@@ -14,19 +14,27 @@ compute_t(
 )
 }
 \arguments{
-\item{data}{= NULL,}
+\item{data}{A data frame object, sample x feature.}
 
-\item{formula}{= NULL,}
+\item{formula}{A formula indicating independent variable. e.g."~ Group".}
 
-\item{dv}{= NULL,}
+\item{dv}{A vector of names of dependent variables for testing.}
 
-\item{output.file}{= NULL,}
+\item{output.file}{Output file names.}
 
-\item{map.names}{= NULL}
+\item{map.names}{A vector for mapping between original and formatted variable
+names.}
 }
 \value{
-A dataframe
+A data frame containing the t test result.
 }
 \description{
-Compute t test
+Compute t test.
+}
+\examples{
+compute_t( data = data,
+                     formula = "~ Group",
+                     dv = dv_names,
+                     map.names = NULL)
+
 }

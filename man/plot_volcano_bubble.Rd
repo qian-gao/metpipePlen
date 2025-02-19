@@ -8,21 +8,27 @@ plot_volcano_bubble(
   datatable = NULL,
   filename = NULL,
   title = NULL,
-  FC_thres = NULL,
-  p.cut.off = NULL,
-  max.overlaps = NULL,
+  p.cut.off = 0.05,
+  max.overlaps = 10,
   color.manual = c("#B4464B", "#4682B4", "grey50")
 )
 }
 \arguments{
-\item{title}{description}
+\item{filename}{Output file name.}
 
-\item{color.manual}{}
+\item{title}{Title of the plot.}
+
+\item{p.cut.off}{p value cut off.}
+
+\item{max.overlaps}{Maximum number of overlapping labels.}
+
+\item{color.manual}{Colors used for different groups.}
+
+\item{A}{data frame used for plotting.}
 }
 \value{
-A data frame
+A volcano plot with different bubble size.
 }
 \description{
-Provides an overview table for the time and scope conditions of
-a data set
+Create volcano plot with different bubble size.
 }

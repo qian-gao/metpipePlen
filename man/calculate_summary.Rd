@@ -13,19 +13,25 @@ calculate_summary(
 )
 }
 \arguments{
-\item{data}{A data frame object, sample x feature}
+\item{data}{A data frame object, sample x feature.}
 
-\item{type}{A vector indicating sample types}
+\item{type}{A vector indicating sample types.}
 
-\item{impute}{If impute missing values}
+\item{impute}{TRUE/FALSE, if impute missing values, if TRUE, half minimum is imputed.}
 
-\item{names.suffix}{Suffix to add on output variable names}
+\item{names.suffix}{Suffix to add to the output variable names.}
 
-\item{other.eval}{If calculate other summary (MAD and VAR)}
+\item{other.eval}{TRUE/FALSE, if calculate other summary (MAD and VAR).}
 }
 \value{
-A list of summaries for all types of samples
+A list of summaries for all types of samples.
 }
 \description{
-Calculate summary for subsets of dataset
+Calculate summary for subsets of dataset.
+}
+\examples{
+calculate_summary( data = data.norm,
+                             type = sample.info.neg$Sample.type,
+                             names.suffix = "norm")
+
 }

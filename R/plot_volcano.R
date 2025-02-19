@@ -1,27 +1,23 @@
 #' @title plot_volcano
 #'
-#' @description Provides an overview table for the time and scope conditions of
-#'     a data set
+#' @description Create volcano plot.
 #'
-#' @param datatable
-#' @param path.result
-#' @param title description
-#' @param FC_thres
-#' @param p.cut.off
-#' @param max.overlaps
-#' @param color.manual
+#' @param A data frame used for plotting.
+#' @param filename Output file name.
+#' @param title Title of the plot.
+#' @param p.cut.off p value cut off.
+#' @param max.overlaps Maximum number of overlapping labels.
+#' @param color.manual Colors used for different groups.
 #'
-#' @return A data frame
-#' @examples
+#' @return A volcano plot.
 #' @export
-#' @import ggplot2 ggrepel openxlsx
+#' @import ggplot2 ggrepel
 
 plot_volcano <- function(datatable = NULL,
                          filename = NULL,
                          title = NULL,
-                         FC_thres = NULL,
-                         p.cut.off = NULL,
-                         max.overlaps = NULL,
+                         p.cut.off = 0.05,
+                         max.overlaps = 10,
                          color.manual = c("#B4464B", "#4682B4", "grey50")){
 
 
@@ -32,7 +28,7 @@ plot_volcano <- function(datatable = NULL,
               aes( x = log2FC, y = log10p)) +
       geom_point( aes( color = Presence_in_media, text = variable),
                   alpha = 0.8, show.legend = TRUE ) +
-      ggrepel::geom_text_repel( aes( label = label),
+      geom_text_repel( aes( label = label),
                                 max.overlaps = max.overlaps, size = 2.5 ) +
       scale_color_manual( values = color.manual, drop = FALSE ) +
       geom_text( aes( p.x.position, -log10(p.cut.off), label = paste0("p=", p.cut.off), vjust = 1.5),

@@ -17,17 +17,30 @@ run_analysis_plot(
 )
 }
 \arguments{
-\item{dat}{A data set object}
+\item{media.thres}{A threshold to label if feature exist in the media.}
 
-\item{id}{Scope (e.g., country codes or individual IDs)}
+\item{FC_thres}{A fold change threshold for highlighting only feature with
+FC >= FC_thres.}
 
-\item{time}{Time (e.g., time periods are given by years, months, ...)}
+\item{path.result}{Path of the result folder.}
+
+\item{p.cut.off}{p value cut off.}
+
+\item{max.overlaps}{Maximum number of overlapping labels.}
+
+\item{map.names}{A vector for mapping between original and formatted variable
+names.}
+
+\item{feature.info}{Feature information.}
+
+\item{color.manual}{Colors used for different groups.}
+
+\item{A}{data frame for analysis, sample x feature.}
 }
 \value{
-A data frame object that contains a summary of a sample that
-can later be converted to a TeX output using \code{overview_print}
+t test results and volcano plot with different bubble size for each gene.
 }
 \description{
-Provides an overview table for the time and scope conditions of
-a data set
+A wrapper function to perform t test to data and then generate
+volcano plot with different bubble size.
 }

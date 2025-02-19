@@ -9,21 +9,34 @@ impute_various_methods(
   method = NULL,
   k = 5,
   missing_thres = 0.2,
-  sample.info = NULL
+  group.info = NULL
 )
 }
 \arguments{
-\item{x}{Input data frame}
+\item{x}{Input data frame for imputation, sample x feature.}
 
-\item{method}{= NULL,}
+\item{method}{Method for imputation, available methods: HF, half minimum; LoD,
+limit of detection, 1/5 of minimum; min, minimum; median; mean;
+knn, k nearest neighbor. If knn is chosen, then the number of
+nearest neighbors k, missing threshold missing_thres and group.info
+(optional) are used. group.info (optional) is a vector indicating
+the group information of the samples. knn works in the way that
+only the feature with missing rate <= missing_thres in a group
+are be imputed with knn group-wise. The rest are imputed with LoD.}
 
-\item{verbose}{= FALSE}
+\item{k}{The number of nearest neighbors.}
+
+\item{missing_thres}{Missing threshold for deciding if knn is applied.}
+
+\item{group.info}{Optional, if provides, knn is applied group-wise.}
 }
 \value{
-A data frame object that contains a summary of a sample that
-can later be converted to a TeX output using \code{overview_print}
+Imputed data frame.
 }
 \description{
-Provides an overview table for the time and scope conditions of
-a data set
+Missing imputation with various methods.
+}
+\examples{
+impute_various_methods( data,
+                                  method = "LoD")
 }

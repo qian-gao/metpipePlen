@@ -1,17 +1,21 @@
 #' @title compute_t
 #'
-#' @description Compute t test
+#' @description Compute t test.
 #'
-#' @param data = NULL,
-#' @param formula = NULL,
-#' @param dv = NULL,
-#' @param output.file = NULL,
-#' @param map.names = NULL
+#' @param data A data frame object, sample x feature.
+#' @param formula A formula indicating independent variable. e.g."~ Group".
+#' @param dv A vector of names of dependent variables for testing.
+#' @param output.file Output file names.
+#' @param map.names A vector for mapping between original and formatted variable
+#'                  names.
 #'
-#' @return A dataframe
-#' @examples
+#' @return A data frame containing the t test result.
+#' @examples compute_t( data = data,
+#'                      formula = "~ Group",
+#'                      dv = dv_names,
+#'                      map.names = NULL)
+#'
 #' @export
-#' @import tidyverse limma
 
 compute_t <-
   function( data = NULL,

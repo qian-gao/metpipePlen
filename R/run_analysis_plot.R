@@ -1,15 +1,21 @@
 #' @title run_analysis_plot
 #'
-#' @description Provides an overview table for the time and scope conditions of
-#'     a data set
+#' @description A wrapper function to perform t test to data and then generate
+#'              volcano plot with different bubble size.
 #'
-#' @param dat A data set object
-#' @param id Scope (e.g., country codes or individual IDs)
-#' @param time Time (e.g., time periods are given by years, months, ...)
+#' @param A data frame for analysis, sample x feature.
+#' @param media.thres A threshold to label if feature exist in the media.
+#' @param FC_thres A fold change threshold for highlighting only feature with
+#'                 FC >= FC_thres.
+#' @param path.result Path of the result folder.
+#' @param p.cut.off p value cut off.
+#' @param max.overlaps Maximum number of overlapping labels.
+#' @param map.names A vector for mapping between original and formatted variable
+#'                  names.
+#' @param feature.info Feature information.
+#' @param color.manual Colors used for different groups.
 #'
-#' @return A data frame object that contains a summary of a sample that
-#'     can later be converted to a TeX output using \code{overview_print}
-#' @examples
+#' @return t test results and volcano plot with different bubble size for each gene.
 #' @export
 #' @import dplyr openxlsx
 
