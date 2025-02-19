@@ -91,7 +91,6 @@ run_analysis_plot <- function(data = NULL,
     plot_volcano_bubble(datatable = result.table,
                  filename = filename,
                  title = plot_title,
-                 FC_thres = FC_thres,
                  p.cut.off = p.cut.off,
                  max.overlaps = max.overlaps,
                  color.manual = color.manual)
