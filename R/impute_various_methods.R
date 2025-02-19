@@ -91,13 +91,10 @@ impute_various_methods <-
     } else if (method == "knn") {
       # if missing < 20% for each group, apply knn, otherwise LoD
 
-      if (!is.null(sample.info)){
+      if (!is.null(group.info)){
         grps <- unique(group.info)
       } else {
-        sample.info <-
-          data.frame(Group = "Group 0")
-
-        grps <- unique(group.info)
+        grps <- "Group 0"
       }
 
 
