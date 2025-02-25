@@ -49,3 +49,6 @@ po/*~
 rsconnect/
 .Rproj.user
 
+# Others
+utils/set_up_package.R
+
