@@ -206,7 +206,9 @@ if (nrow(peaks.is > 0)){
 ```
 
 #### 3 Missing imputation
-Missing was imputed with 1/5 of min for each feature
+Missing was imputed with method KNN. It works in the way that only the feature with 
+missing rate <= missing_thres in a group (indicated by group.info) are be imputed 
+with KNN group-wise. The rest are imputed imputed with 1/5 of min for each feature.
 ```{r pos impute, eval = run.pos}
 
 # Peaks
