@@ -56,8 +56,7 @@ pkgs <- c("tidyverse", "ggplot2", "openxlsx", "devtools")
 pkgs.to.install <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
 if (length(pkgs.to.install) > 0) install.packages( pkgs.to.install, dependencies = TRUE)
 if (!"metpipePlen" %in% installed.packages()[,"Package"]) {
-  devtools::install_github("https://github.com/qian-gao/metpipePlen",
-                         auth_token = "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")
+  devtools::install_github("https://github.com/qian-gao/metpipePlen")
 }
 ```
 
