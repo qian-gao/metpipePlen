@@ -1,0 +1,512 @@
+---
+title: "Analysis"
+author: "Qian Gao, qian.gao@sund.ku.dk"
+date: "`r base::Sys.Date()`"
+
+knit: ( function(inputFile, encoding) { 
+          rmarkdown::render( inputFile, 
+                             encoding = encoding, 
+                             output_file = paste0( substr(inputFile,1,nchar(inputFile)-4), '_', Sys.Date(),'.html')) 
+          })
+
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+    df_print: paged
+  html_notebook:
+    toc: yes
+    toc_depth: '3'
+    df_print: paged
+---
+
+
+```{r setup, include = FALSE}
+
+### General setup
+path.result <- "result/"
+
+path.datatable.pos <- "raw_data/prepro014_positive_v1Qian.csv"
+is.name.pos <- "1368/195.0869mz/9.85min"
+
+path.datatable.neg <- "raw_data/prepro014_negative_v1Qian.csv"
+is.name.neg <- "1339/424.0372mz/2.66min"
+
+datatable.sep <- ","
+
+### Preprocessing parameters
+missing.in.QC <- 92
+rsd.thres <- c( 1, "QC", "<", 0.3)
+mean.thres <- c( 1, "QC", ">", 500)
+rt.range <- c(0.5, 30)
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE,
+  include = TRUE
+)
+
+```
+
+```{r install packages, eval = FALSE}
+### Only run for the first time
+
+pkgs <- c("tidyverse", "ggplot2", "openxlsx", "devtools") 
+pkgs.to.install <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
+if (length(pkgs.to.install) > 0) install.packages( pkgs.to.install, dependencies = TRUE)
+if (!"metpipePlen" %in% installed.packages()[,"Package"]) {
+  devtools::install_github("https://github.com/qian-gao/metpipePlen",
+                         auth_token = "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")
+}
+```
+
+```{r load environment, include = FALSE}
+
+library(tidyverse)
+library(openxlsx)
+library(metpipePlen)
+library(ggplot2)
+#source("functions/run_analysis.R")
+
+run.pos <- !is.null(path.datatable.pos)
+run.neg <- !is.null(path.datatable.neg)
+if (!dir.exists(path.result)) dir.create(path.result)
+
+```
+
+## Preprocessing
+### POS
+#### 1 Data import
+```{r pos data import, eval = run.pos}
+
+print("POS data were extracted from the following files:", quote = FALSE)
+print(path.datatable.pos, quote = FALSE)
+
+datatable <- 
+  read.table( path.datatable.pos, sep = datatable.sep, 
+              header = TRUE, check.names = FALSE)
+
+sample.info.pos <-
+  t(datatable[1, 2:ncol(datatable)]) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("File.name") %>% 
+  dplyr::rename(Sample.type = 2) %>%
+  rowwise() %>% 
+  mutate(Group = Sample.type,
+         Sample.type = ifelse(Sample.type %in% c("QC", "MEDIA"), 
+                              Sample.type, 
+                              "Sample"),
+         Sample.name = strsplit(File.name, " ")[[1]][1]) %>%
+  ungroup()
+
+feature.info <- 
+  data.frame(Identity = datatable[2:nrow(datatable), 1]) %>% 
+  rowwise() %>%
+  mutate(mz = as.numeric(strsplit(Identity, "[/mz]")[[1]][2]),
+         rt = as.numeric(strsplit(Identity, "[/mz]")[[1]][5])) %>%
+  relocate(c("mz", "rt"), .before = "Identity") %>%
+  ungroup() %>%
+  group_by(Identity) %>%
+  mutate(m = n(),
+         Identity = ifelse(m > 1, 
+                           paste0(Identity, "-iso", row_number()),
+                           Identity)) %>%
+  ungroup() %>%
+  select(-m)
+
+peaks.temp <- 
+  datatable[2:nrow(datatable), 2:ncol(datatable)] %>%
+  mutate_if(is.character, as.numeric)
+  
+peaks.all <- 
+  cbind(feature.info, peaks.temp)
+
+```
+
+#### 2 Feature filtering
+##### 2.1 Remove features missing in QC
+Missings should be less than 92% in QC. Controlled by 'missing.in.QC <- 92'
+```{r pos filtering 1, eval = run.pos}
+peaks.QC <- 
+  peaks.all[, sample.info.pos %>% filter(Sample.type == "QC") %>% pull(File.name)]
+ 
+keep.index <- which(rowSums(is.na(peaks.QC)) < (ncol(peaks.QC) * missing.in.QC / 100))
+
+peaks.all.filtered <- peaks.all[keep.index, ]
+
+print(paste0("Only keep features having < ", missing.in.QC, "% missings in QC: ",
+             nrow(peaks.QC) - length(keep.index), " features have been removed"), 
+      quote = FALSE)
+
+peaks.is <- 
+  peaks.all.filtered %>%
+  filter(Identity %in% is.name.pos)
+
+peaks <- 
+  peaks.all.filtered %>%
+  filter(!Identity %in% is.name.pos)
+```
+
+##### 2.2 Filter features based on RSD, RT and mean intensity in sample
+Features should have RSD < 30%, mean value > 500. Only keep features with retention 
+time in the range of 0.5-30 min.
+Controlled by:
+rsd.thres <- c(1, "QC", "<", 0.3)
+mean.thres <- c(1, "QC", ">", 500)
+rt.range <- c(0.5, 30)
+```{r pos filtering 2, eval = run.pos}
+
+# Peaks
+mzrt.filtered <-
+  filter_peaks( peaktable = peaks,
+                sample.type = sample.info.pos$Sample.type,
+                rsd.filter = rsd.thres,
+                mean.filter = mean.thres,
+                rt.range = rt.range)
+
+peaks.filtered <- 
+  mzrt.filtered$peaktable
+
+features <- 
+  cbind( peaks.filtered[, c("mz", "rt", "Identity")], 
+         mzrt.filtered$summary[, -1]) %>% 
+  mutate(mode = "pos",
+         Identity_mode = paste0("pos_", Identity)) %>%
+  relocate(c("mode", "Identity_mode"), .before = "Identity")
+
+data <- 
+  t(peaks.filtered[, !colnames(peaks.filtered) %in% c("mz", "rt", "Identity")]) %>%
+  as.data.frame()
+
+colnames(data) <- features$Identity
+
+# IS
+if (nrow(peaks.is > 0)){
+  mzrt.is.filtered <-
+    filter_peaks( peaktable = peaks.is,
+                  sample.type = sample.info.pos$Sample.type,
+                  rsd.filter = c(),
+                  mean.filter = c(),
+                  rt.range = rt.range)
+  
+  peaks.is.filtered <- 
+    mzrt.is.filtered$peaktable
+  
+  
+  features.is <- 
+    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, -1])
+  
+  data.is <- 
+    t(peaks.is.filtered[, !colnames(peaks.is.filtered) %in% c("mz", "rt", "Identity")]) %>%
+    as.data.frame()
+  
+  colnames(data.is) <- features.is$Identity
+}
+```
+
+#### 3 Missing imputation
+Missing was imputed with 1/5 of min for each feature
+```{r pos impute, eval = run.pos}
+
+# Peaks
+data.impute <- 
+  impute_various_methods( data,
+                          method = "LoD"
+  )
+
+data <- data.impute$x
+
+# IS
+if (nrow(peaks.is > 0)){
+
+  data.impute.is <- 
+    impute_various_methods( data.is,
+                            method = "LoD"
+    )
+  
+  data.is <- data.impute.is$x
+}
+```
+
+#### 4 Normalization
+Normalized by internal standard
+```{r pos normalization, eval = run.pos}
+data.norm <- 
+  apply(data, 2, function(x) t(x / data.is)) %>%
+  as.data.frame()
+
+data.rsd <-
+  calculate_rsd( data = data.norm,
+                 type = sample.info.pos$Sample.type,
+                 names.suffix = "norm.rsd")$type.rsd
+
+features.pos <-
+  features %>%
+  left_join(data.rsd, by = "Identity")
+
+data.pos <- 
+  cbind(sample.info.pos[, c("Sample.name", "Group")], data.norm) %>% 
+  filter(Group != "QC")
+
+```
+
+### NEG
+#### 1 Data import
+```{r neg data import, eval = run.neg}
+
+print("NEG data were extracted from the following files:", quote = FALSE)
+print(path.datatable.neg, quote = FALSE)
+
+datatable <- 
+  read.table( path.datatable.neg, sep = datatable.sep, 
+              header = TRUE, check.names = FALSE)
+
+sample.info.neg <-
+  t(datatable[1, 2:ncol(datatable)]) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("File.name") %>% 
+  dplyr::rename(Sample.type = 2) %>%
+  rowwise() %>% 
+  mutate(Group = Sample.type,
+         Sample.type = ifelse(Sample.type %in% c("QC", "MEDIA"), 
+                              Sample.type, 
+                              "Sample"),
+         Sample.name = strsplit(File.name, " ")[[1]][1]) %>%
+  ungroup()
+  
+feature.info <- 
+  data.frame(Identity = datatable[2:nrow(datatable), 1]) %>% 
+  rowwise() %>%
+  mutate(mz = as.numeric(strsplit(Identity, "[/mz]")[[1]][2]),
+         rt = as.numeric(strsplit(Identity, "[/mz]")[[1]][5])) %>%
+  relocate(c("mz", "rt"), .before = "Identity") %>%
+  ungroup() %>%
+  group_by(Identity) %>%
+  mutate(m = n(),
+         Identity = ifelse(m > 1, 
+                           paste0(Identity, "-iso", row_number()),
+                           Identity)) %>%
+  ungroup() %>%
+  select(-m)
+
+peaks.temp <- 
+  datatable[2:nrow(datatable), 2:ncol(datatable)] %>%
+  mutate_if(is.character, as.numeric)
+  
+peaks.all <- 
+  cbind(feature.info, peaks.temp)
+
+```
+
+#### 2 Feature filtering
+##### 2.1 Remove features missing in QC
+```{r neg filtering 1, eval = run.neg}
+peaks.QC <- 
+  peaks.all[, sample.info.neg %>% filter(Sample.type == "QC") %>% pull(File.name)]
+ 
+keep.index <- which(rowSums(is.na(peaks.QC)) < (ncol(peaks.QC) * missing.in.QC / 100))
+
+peaks.all.filtered <- peaks.all[keep.index, ]
+
+print(paste0("Only keep features having < ", missing.in.QC, "% missings in QC: ",
+             nrow(peaks.QC) - length(keep.index), " features have been removed"), 
+      quote = FALSE)
+
+peaks.is <- 
+  peaks.all.filtered %>%
+  filter(Identity %in% is.name.neg)
+
+peaks <- 
+  peaks.all.filtered %>%
+  filter(!Identity %in% is.name.neg)
+```
+
+##### 2.2 Filter features based on RSD, RT and mean intensity in sample
+```{r neg filtering 2, eval = run.neg}
+
+# Peaks
+mzrt.filtered <-
+  filter_peaks( peaktable = peaks,
+                sample.type = sample.info.neg$Sample.type,
+                rsd.filter = rsd.thres,
+                mean.filter = mean.thres,
+                rt.range = rt.range)
+
+peaks.filtered <- 
+  mzrt.filtered$peaktable
+
+features <- 
+  cbind( peaks.filtered[, c("mz", "rt", "Identity")],
+         mzrt.filtered$summary[, -1]) %>% 
+  mutate(mode = "neg",
+         Identity_mode = paste0("neg_", Identity)) %>%
+  relocate(c("mode", "Identity_mode"), .before = "Identity")
+
+data <- 
+  t(peaks.filtered[, !colnames(peaks.filtered) %in% c("mz", "rt", "Identity")]) %>%
+  as.data.frame()
+
+colnames(data) <- features$Identity
+
+# IS
+if (nrow(peaks.is > 0)){
+  mzrt.is.filtered <-
+    filter_peaks( peaktable = peaks.is,
+                  sample.type = sample.info.neg$Sample.type,
+                  rsd.filter = c(),
+                  mean.filter = c(),
+                  rt.range = rt.range)
+  
+  peaks.is.filtered <- 
+    mzrt.is.filtered$peaktable
+  
+  
+  features.is <- 
+    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, -1])
+  
+  data.is <- 
+    t(peaks.is.filtered[, !colnames(peaks.is.filtered) %in% c("mz", "rt", "Identity")]) %>%
+    as.data.frame()
+  
+  colnames(data.is) <- features.is$Identity
+}
+```
+
+#### 3 Missing imputation
+```{r neg impute, eval = run.neg}
+
+# Peaks
+data.impute <- 
+  impute_various_methods( data,
+                          method = "LoD"
+  )
+
+data <- data.impute$x
+
+# IS
+if (nrow(peaks.is > 0)){
+
+  data.impute.is <- 
+    impute_various_methods( data.is,
+                            method = "LoD"
+    )
+  
+  data.is <- data.impute.is$x
+}
+```
+
+#### 4 Normalization
+```{r neg normalization, eval = run.neg}
+data.norm <- 
+  apply(data, 2, function(x) t(x / data.is)) %>%
+  as.data.frame()
+
+data.rsd <-
+  calculate_rsd( data = data.norm,
+                 type = sample.info.neg$Sample.type,
+                 names.suffix = "norm.rsd")$type.rsd
+
+features.neg <-
+  features %>%
+  left_join(data.rsd, by = "Identity")
+
+data.neg <- 
+  cbind(sample.info.neg[, c("Sample.name", "Group")], data.norm) %>% 
+  filter(Group != "QC")
+
+```
+
+### Merge POS and NEG
+Merge features from positive and negative mode into the same table
+```{r merge}
+
+if (run.pos & run.neg) {
+  data.output <- 
+    data.pos %>%
+    full_join(data.neg[, !colnames(data.neg) %in% "Group"], by = "Sample.name")
+  
+  features.output <-
+    rbind(features.pos, features.neg)
+  
+} else if (run.pos & !run.neg) {
+  data.output <- 
+    data.pos
+  
+  features.output <-
+    features.pos
+} else if (!run.pos & run.neg) {
+  data.output <- 
+    data.neg
+  
+  features.output <-
+    features.neg
+}  
+
+feature.names <- c("Sample.name", "Group", features.output$Identity_mode)
+names(feature.names) <- c("Sample.name", "Group", features.output$Identity)
+  
+colnames(data.output) <- feature.names[colnames(data.output)]
+datalist <- list(data = data.output,
+                 features = features.output)
+
+```
+
+```{r export clean table}
+output.file <- paste0(path.result, "peaktable_cleaned.xlsx")
+
+wb <- createWorkbook()
+addWorksheet(wb, "peaktable")
+writeData(wb, "peaktable", datalist$data)
+addWorksheet(wb, "features")
+writeData(wb, "features", datalist$features)
+saveWorkbook(wb, file = output.file, overwrite = TRUE)
+
+saveRDS(datalist, file = paste0(path.result, "peaktable_cleaned.rds"))
+print( paste0("Cleaned peaktable was saved as: ", output.file ), quote = FALSE)
+```
+
+## Analysis
+```{r load data}
+datalist <- readRDS(paste0(path.result, "peaktable_cleaned.rds"))
+datatable <- datalist$data
+feature.info <- datalist$features
+```
+
+```{r prepare data}
+
+### Prepare data
+sample.info <- 
+  datatable[, 1:2]
+  
+dv <- 
+  log2(datatable[, 3:ncol(datatable)]) %>%
+  as.data.frame()
+
+map.names <- colnames(dv)
+m_names <- make.names(map.names)
+names(map.names) <- m_names
+
+colnames(dv) <- m_names
+
+data <- cbind(sample.info, dv)
+```
+
+Output table and figures are stored in 'path.result'. If in media, the feature has mean value > 500, then it is considered to exist in media. Fold change threshold is 2.
+Controlled by:
+media.thres = 500
+FC_thres = 2
+path.result = path.result
+```{r analysis}
+
+run_analysis(data = data,
+             media.thres = 500,
+             FC_thres = 2,
+             path.result = path.result,
+             map.names = map.names,
+             max.overlaps = 7,
+             feature.info = feature.info)
+
+```
+
+
