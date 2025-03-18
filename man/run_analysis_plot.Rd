@@ -13,7 +13,10 @@ run_analysis_plot(
   max.overlaps = 10,
   map.names = NULL,
   feature.info = NULL,
-  color.manual = c("#B4464B", "#4682B4", "grey50")
+  color.manual = c("#B4464B", "#4682B4", "grey50"),
+  ratio_range = c(-10, 2),
+  fig.format = ".svg",
+  max_size = 6
 )
 }
 \arguments{
@@ -34,6 +37,12 @@ names.}
 \item{feature.info}{Feature information.}
 
 \item{color.manual}{Colors used for different groups.}
+
+\item{ratio_range}{Range of cell/media ratio}
+
+\item{fig.format}{Output figure format}
+
+\item{max_size}{Maximum bubble size}
 
 \item{A}{data frame for analysis, sample x feature.}
 }

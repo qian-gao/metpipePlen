@@ -13,7 +13,8 @@ run_analysis(
   max.overlaps = 10,
   map.names = NULL,
   feature.info = NULL,
-  color.manual = c("#B4464B", "#4682B4", "grey50")
+  color.manual = c("#B4464B", "#4682B4", "grey50"),
+  fig.format = ".svg"
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ names.}
 \item{feature.info}{Feature information.}
 
 \item{color.manual}{Colors used for different groups.}
+
+\item{fig.format}{Output figure format}
 
 \item{A}{data frame for analysis, sample x feature.}
 }

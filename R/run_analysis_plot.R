@@ -14,6 +14,9 @@
 #'                  names.
 #' @param feature.info Feature information.
 #' @param color.manual Colors used for different groups.
+#' @param ratio_range Range of cell/media ratio
+#' @param fig.format Output figure format
+#' @param max_size Maximum bubble size
 #'
 #' @return t test results and volcano plot with different bubble size for each gene.
 #' @export
@@ -27,7 +30,10 @@ run_analysis_plot <- function(data = NULL,
                          max.overlaps = 10,
                          map.names = NULL,
                          feature.info = NULL,
-                         color.manual = c("#B4464B", "#4682B4", "grey50")){
+                         color.manual = c("#B4464B", "#4682B4", "grey50"),
+                         ratio_range = c(-10, 2),
+                         fig.format = ".svg",
+                         max_size = 6){
 
   genes <- unique(data$Group)
   genes <- genes[!genes %in% c("MOCK", "MEDIA")]
@@ -85,7 +91,7 @@ run_analysis_plot <- function(data = NULL,
 
     result.table$Presence_in_media <- factor(result.table$Presence_in_media, levels = c("Present", "Absent", "Non-significant"))
 
-    filename <- paste0(path.result, "Volcano_plot_", i, ".svg")
+    filename <- paste0(path.result, "Volcano_plot_", i, fig.format)
     plot_title <- paste0("Volcano plot for ", i )
     datatable = result.table
     plot_volcano_bubble(datatable = result.table,
@@ -93,7 +99,9 @@ run_analysis_plot <- function(data = NULL,
                  title = plot_title,
                  p.cut.off = p.cut.off,
                  max.overlaps = max.overlaps,
-                 color.manual = color.manual)
+                 color.manual = color.manual,
+                 ratio_range = ratio_range,
+                 max_size = max_size)
 
     result.table <-
       result.table %>%

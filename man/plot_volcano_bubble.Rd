@@ -10,7 +10,9 @@ plot_volcano_bubble(
   title = NULL,
   p.cut.off = 0.05,
   max.overlaps = 10,
-  color.manual = c("#B4464B", "#4682B4", "grey50")
+  color.manual = c("#B4464B", "#4682B4", "grey50"),
+  ratio_range = c(-10, 2),
+  max_size = 6
 )
 }
 \arguments{
@@ -23,6 +25,10 @@ plot_volcano_bubble(
 \item{max.overlaps}{Maximum number of overlapping labels.}
 
 \item{color.manual}{Colors used for different groups.}
+
+\item{ratio_range}{Range of cell/media ratio}
+
+\item{max_size}{Maximum bubble size}
 
 \item{A}{data frame used for plotting.}
 }

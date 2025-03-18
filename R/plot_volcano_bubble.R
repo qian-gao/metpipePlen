@@ -8,6 +8,8 @@
 #' @param p.cut.off p value cut off.
 #' @param max.overlaps Maximum number of overlapping labels.
 #' @param color.manual Colors used for different groups.
+#' @param ratio_range Range of cell/media ratio
+#' @param max_size Maximum bubble size
 #'
 #' @return A volcano plot with different bubble size.
 #' @export
@@ -18,7 +20,9 @@ plot_volcano_bubble <- function(datatable = NULL,
                          title = NULL,
                          p.cut.off = 0.05,
                          max.overlaps = 10,
-                         color.manual = c("#B4464B", "#4682B4", "grey50")){
+                         color.manual = c("#B4464B", "#4682B4", "grey50"),
+                         ratio_range = c(-10, 2),
+                         max_size = 6){
 
 
     p.x.position <- max(datatable$log2FC) - 0.5
@@ -36,6 +40,9 @@ plot_volcano_bubble <- function(datatable = NULL,
       geom_text_repel( aes( label = label),
                                 max.overlaps = max.overlaps, size = 2.5 ) +
       scale_color_manual( values = color.manual, drop = FALSE ) +
+      scale_size_binned(limits = ratio_range,
+                        range = c(.1, max_size),
+                        name = "Cell/media ratio") +
       geom_text( aes( p.x.position, -log10(p.cut.off), label = paste0("p=", p.cut.off), vjust = 1.5),
                  size = 3, col = "black") +
       geom_hline( yintercept = -log10(p.cut.off), col = "black") +

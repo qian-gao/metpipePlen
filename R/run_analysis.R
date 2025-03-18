@@ -14,6 +14,7 @@
 #'                  names.
 #' @param feature.info Feature information.
 #' @param color.manual Colors used for different groups.
+#' @param fig.format Output figure format
 #'
 #' @return t test results and volcano plot for each gene.
 #' @export
@@ -27,7 +28,8 @@ run_analysis <- function(data = NULL,
                          max.overlaps = 10,
                          map.names = NULL,
                          feature.info = NULL,
-                         color.manual = c("#B4464B", "#4682B4", "grey50")){
+                         color.manual = c("#B4464B", "#4682B4", "grey50"),
+                         fig.format = ".svg"){
 
   genes <- unique(data$Group)
   genes <- genes[!genes %in% c("MOCK", "MEDIA")]
@@ -72,7 +74,7 @@ run_analysis <- function(data = NULL,
 
     result.table$Presence_in_media <- factor(result.table$Presence_in_media, levels = c("Present", "Absent", "Non-significant"))
 
-    filename <- paste0(path.result, "Volcano_plot_", i, ".svg")
+    filename <- paste0(path.result, "Volcano_plot_", i, fig.format)
     plot_title <- paste0("Volcano plot for ", i )
 
     plot_volcano(datatable = result.table,
