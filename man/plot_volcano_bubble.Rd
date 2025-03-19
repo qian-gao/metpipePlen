@@ -11,8 +11,8 @@ plot_volcano_bubble(
   p.cut.off = 0.05,
   max.overlaps = 10,
   color.manual = c("#B4464B", "#4682B4", "grey50"),
-  min_size = -10,
-  max_size = 6,
+  ratio_range = c(-10, 2),
+  bubble_size_range = c(-1, 6),
   breaks = c(-10, -7.5, -5, -2.5, 0, 2.5),
   bubble_name = "Cell/media ratio"
 )
@@ -28,9 +28,9 @@ plot_volcano_bubble(
 
 \item{color.manual}{Colors used for different groups.}
 
-\item{min_size}{Minimum bubble size}
+\item{ratio_range}{Range of cell/media ratio, e.g. c(-10, 2)}
 
-\item{max_size}{Maximum bubble size}
+\item{bubble_size_range}{Range of bubble size, e.g. c(-1, 6)}
 
 \item{breaks}{Breaks for cell/media ratio}
 

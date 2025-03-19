@@ -15,8 +15,8 @@
 #' @param feature.info Feature information.
 #' @param color.manual Colors used for different groups.
 #' @param fig.format Output figure format
-#' @param min_size Minimum bubble size
-#' @param max_size Maximum bubble size
+#' @param ratio_range Range of cell/media ratio, e.g. c(-10, 2)
+#' @param bubble_size_range Range of bubble size, e.g. c(-1, 6)
 #' @param breaks Breaks for cell/media ratio
 #' @param bubble_name Legend name for bubbles
 #'
@@ -34,8 +34,8 @@ run_analysis_plot <- function(data = NULL,
                          feature.info = NULL,
                          color.manual = c("#B4464B", "#4682B4", "grey50"),
                          fig.format = ".svg",
-                         min_size = -10,
-                         max_size = 6,
+                         ratio_range = c(-10, 2),
+                         bubble_size_range = c(-1, 6),
                          breaks = c(-10, -7.5, -5, -2.5, 0, 2.5),
                          bubble_name = "Cell/media ratio"){
 
@@ -104,8 +104,8 @@ run_analysis_plot <- function(data = NULL,
                  p.cut.off = p.cut.off,
                  max.overlaps = max.overlaps,
                  color.manual = color.manual,
-                 min_size = min_size,
-                 max_size = max_size,
+                 ratio_range = ratio_range,
+                 bubble_size_range = bubble_size_range,
                  breaks = breaks,
                  bubble_name = bubble_name)
 
