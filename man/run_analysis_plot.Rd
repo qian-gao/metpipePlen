@@ -14,9 +14,11 @@ run_analysis_plot(
   map.names = NULL,
   feature.info = NULL,
   color.manual = c("#B4464B", "#4682B4", "grey50"),
-  ratio_range = c(-10, 2),
   fig.format = ".svg",
-  max_size = 6
+  min_size = -10,
+  max_size = 6,
+  breaks = c(-10, -7.5, -5, -2.5, 0, 2.5),
+  bubble_name = "Cell/media ratio"
 )
 }
 \arguments{
@@ -38,11 +40,15 @@ names.}
 
 \item{color.manual}{Colors used for different groups.}
 
-\item{ratio_range}{Range of cell/media ratio}
-
 \item{fig.format}{Output figure format}
 
+\item{min_size}{Minimum bubble size}
+
 \item{max_size}{Maximum bubble size}
+
+\item{breaks}{Breaks for cell/media ratio}
+
+\item{bubble_name}{Legend name for bubbles}
 
 \item{A}{data frame for analysis, sample x feature.}
 }

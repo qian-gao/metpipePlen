@@ -14,9 +14,11 @@
 #'                  names.
 #' @param feature.info Feature information.
 #' @param color.manual Colors used for different groups.
-#' @param ratio_range Range of cell/media ratio
 #' @param fig.format Output figure format
+#' @param min_size Minimum bubble size
 #' @param max_size Maximum bubble size
+#' @param breaks Breaks for cell/media ratio
+#' @param bubble_name Legend name for bubbles
 #'
 #' @return t test results and volcano plot with different bubble size for each gene.
 #' @export
@@ -31,9 +33,11 @@ run_analysis_plot <- function(data = NULL,
                          map.names = NULL,
                          feature.info = NULL,
                          color.manual = c("#B4464B", "#4682B4", "grey50"),
-                         ratio_range = c(-10, 2),
                          fig.format = ".svg",
-                         max_size = 6){
+                         min_size = -10,
+                         max_size = 6,
+                         breaks = c(-10, -7.5, -5, -2.5, 0, 2.5),
+                         bubble_name = "Cell/media ratio"){
 
   genes <- unique(data$Group)
   genes <- genes[!genes %in% c("MOCK", "MEDIA")]
@@ -100,8 +104,10 @@ run_analysis_plot <- function(data = NULL,
                  p.cut.off = p.cut.off,
                  max.overlaps = max.overlaps,
                  color.manual = color.manual,
-                 ratio_range = ratio_range,
-                 max_size = max_size)
+                 min_size = min_size,
+                 max_size = max_size,
+                 breaks = breaks,
+                 bubble_name = bubble_name)
 
     result.table <-
       result.table %>%
