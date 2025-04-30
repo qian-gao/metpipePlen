@@ -47,10 +47,6 @@ permeation.features <-
     "neg_2133/447.0524mz/8.27min",
     "neg_3428/577.1546mz/15.92min")
 
-permeation.features <- 
-  c("neg_592/248.9601mz/0.99min",
-    "pos_1963/160.0751mz/13.61min")
-
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,

@@ -64,7 +64,7 @@ filter_peaks_summary <-
     summary <-
       calculate_summary( data = data,
                      type = sample.type,
-                     impute = FALSE)
+                     impute = TRUE)
 
     summary$type.mean <-
       summary$type.mean %>%
