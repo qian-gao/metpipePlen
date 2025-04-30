@@ -61,7 +61,7 @@ run_analysis_plot <- function(data = NULL,
               filter(Group != "MOCK") %>%
               select(-c(Sample.name, Group)),
             2,
-            function(x){log2(mean(2^x, na.rm = TRUE))}) %>%
+            function(x){mean(2^x, na.rm = TRUE)}) %>%
       as.data.frame() %>%
       rename(mean.cell = ".")
 
@@ -88,7 +88,7 @@ run_analysis_plot <- function(data = NULL,
              ),
              label = if_else(FC_over_thres & adj.p.value < p.cut.off, variable, ""),
              ratio_cell_media_log2 = if_else(Presence_in_media == "Present",
-                                             mean.cell - mean.MEDIA.norm,
+                                             log2(mean.cell / mean.MEDIA.norm),
                                              NA)
              ) %>%
       select(-c(AveExpr, B))

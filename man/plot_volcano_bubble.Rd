@@ -10,7 +10,7 @@ plot_volcano_bubble(
   title = NULL,
   p.cut.off = 0.05,
   max.overlaps = 10,
-  color.manual = c("#B4464B", "#4682B4", "grey50"),
+  color.manual = c("#B4464B", "#4682B4", "grey50", "#B4AF46"),
   ratio_range = c(-10, 2),
   bubble_size_range = c(-1, 6),
   breaks = c(-10, -7.5, -5, -2.5, 0, 2.5),
