@@ -47,6 +47,10 @@ permeation.features <-
     "neg_2133/447.0524mz/8.27min",
     "neg_3428/577.1546mz/15.92min")
 
+permeation.features <- 
+  c("neg_592/248.9601mz/0.99min",
+    "pos_1963/160.0751mz/13.61min")
+
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
@@ -567,7 +571,8 @@ Highlight the 4 permeation features on the volcano plot only if all four are
 statistically significant. If that condition is met, the output should be saved 
 in a separate folder "permeation".
 
-```{r analysis volcano bubble plot}
+### Volcano plot with permeation filter and bubbles
+```{r}
 
 run_analysis_plot_permeation(data = data,
              media.thres = 500,
@@ -586,6 +591,7 @@ run_analysis_plot_permeation(data = data,
 
 ```
 
+### Volcano plot with permeation filter and bubbles
 ```{r}
 run_analysis_plot_permeation(data = data,
              media.thres = 500,
@@ -598,6 +604,7 @@ run_analysis_plot_permeation(data = data,
              bubble = FALSE)
 ```
 
+### Volcano plot with bubbles
 ```{r}
 run_analysis_plot_permeation(data = data,
              media.thres = 500,
@@ -615,6 +622,7 @@ run_analysis_plot_permeation(data = data,
              )
 ```
 
+### Volcano plot
 ```{r}
 run_analysis_plot_permeation(data = data,
              media.thres = 500,

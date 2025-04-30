@@ -40,6 +40,17 @@ rsd.thres <- c( 1, "QC", "<", 0.3)
 mean.thres <- c( 1, "QC", ">", 500)
 rt.range <- c(0.5, 30)
 
+### Permeation check features
+permeation.features <- 
+  c("neg_3879/476.1073mz/18.55min",
+    "pos_1081/277.1646mz/8.04min",
+    "neg_2133/447.0524mz/8.27min",
+    "neg_3428/577.1546mz/15.92min")
+
+permeation.features <- 
+  c("neg_592/248.9601mz/0.99min",
+    "pos_1963/160.0751mz/13.61min")
+
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
@@ -52,7 +63,7 @@ knitr::opts_chunk$set(
 ```{r install packages, eval = FALSE}
 ### Only run for the first time
 
-pkgs <- c("tidyverse", "ggplot2", "openxlsx", "devtools") 
+pkgs <- c("tidyverse", "openxlsx", "devtools") 
 pkgs.to.install <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
 if (length(pkgs.to.install) > 0) install.packages( pkgs.to.install, dependencies = TRUE)
 if (!"metpipePlen" %in% installed.packages()[,"Package"]) {
@@ -65,8 +76,6 @@ if (!"metpipePlen" %in% installed.packages()[,"Package"]) {
 library(tidyverse)
 library(openxlsx)
 library(metpipePlen)
-library(ggplot2)
-#source("functions/run_analysis.R")
 
 run.pos <- !is.null(path.datatable.pos)
 run.neg <- !is.null(path.datatable.neg)
@@ -158,7 +167,7 @@ rt.range <- c(0.5, 30)
 
 # Peaks
 mzrt.filtered <-
-  filter_peaks( peaktable = peaks,
+  filter_peaks_summary( peaktable = peaks,
                 sample.type = sample.info.pos$Sample.type,
                 rsd.filter = rsd.thres,
                 mean.filter = mean.thres,
@@ -169,7 +178,7 @@ peaks.filtered <-
 
 features <- 
   cbind( peaks.filtered[, c("mz", "rt", "Identity")], 
-         mzrt.filtered$summary[, -1]) %>% 
+         mzrt.filtered$summary[, 2:7]) %>% 
   mutate(mode = "pos",
          Identity_mode = paste0("pos_", Identity)) %>%
   relocate(c("mode", "Identity_mode"), .before = "Identity")
@@ -183,7 +192,7 @@ colnames(data) <- features$Identity
 # IS
 if (nrow(peaks.is > 0)){
   mzrt.is.filtered <-
-    filter_peaks( peaktable = peaks.is,
+    filter_peaks_summary( peaktable = peaks.is,
                   sample.type = sample.info.pos$Sample.type,
                   rsd.filter = c(),
                   mean.filter = c(),
@@ -194,7 +203,7 @@ if (nrow(peaks.is > 0)){
   
   
   features.is <- 
-    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, -1])
+    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, 2:7])
   
   data.is <- 
     t(peaks.is.filtered[, !colnames(peaks.is.filtered) %in% c("mz", "rt", "Identity")]) %>%
@@ -205,13 +214,15 @@ if (nrow(peaks.is > 0)){
 ```
 
 #### 3 Missing imputation
-Missing was imputed with 1/5 of min for each feature
+Missing was imputed with method KNN. It works in the way that only the feature with 
+missing rate <= missing_thres in a group (indicated by group.info) are be imputed 
+with KNN group-wise. The rest are imputed imputed with 1/5 of min for each feature.
 ```{r pos impute, eval = run.pos}
 
 # Peaks
 data.impute <- 
   impute_various_methods( data,
-                          method = "LoD"
+                          method = "min"
   )
 
 data <- data.impute$x
@@ -221,7 +232,7 @@ if (nrow(peaks.is > 0)){
 
   data.impute.is <- 
     impute_various_methods( data.is,
-                            method = "LoD"
+                            method = "min"
     )
   
   data.is <- data.impute.is$x
@@ -231,18 +242,28 @@ if (nrow(peaks.is > 0)){
 #### 4 Normalization
 Normalized by internal standard
 ```{r pos normalization, eval = run.pos}
+
+## Calculate group mean after imputation and before norm
+data.summary.impute.grp <-
+  calculate_summary( data = data.impute$x,
+                 type = sample.info.pos$Group,
+                 names.suffix = "impute")
+
+## Normalization
 data.norm <- 
   apply(data, 2, function(x) t(x / data.is)) %>%
   as.data.frame()
 
-data.rsd <-
-  calculate_rsd( data = data.norm,
-                 type = sample.info.pos$Sample.type,
-                 names.suffix = "norm.rsd")$type.rsd
+## Calculate group mean after norm
+data.summary.norm.grp <-
+  calculate_summary( data = data.norm,
+                 type = sample.info.pos$Group,
+                 names.suffix = "norm")
 
 features.pos <-
   features %>%
-  left_join(data.rsd, by = "Identity")
+  left_join(data.summary.impute.grp$type.mean, by = "Identity") %>%
+  left_join(data.summary.norm.grp$type.mean, by = "Identity")
 
 data.pos <- 
   cbind(sample.info.pos[, c("Sample.name", "Group")], data.norm) %>% 
@@ -326,7 +347,7 @@ peaks <-
 
 # Peaks
 mzrt.filtered <-
-  filter_peaks( peaktable = peaks,
+  filter_peaks_summary( peaktable = peaks,
                 sample.type = sample.info.neg$Sample.type,
                 rsd.filter = rsd.thres,
                 mean.filter = mean.thres,
@@ -337,7 +358,7 @@ peaks.filtered <-
 
 features <- 
   cbind( peaks.filtered[, c("mz", "rt", "Identity")],
-         mzrt.filtered$summary[, -1]) %>% 
+         mzrt.filtered$summary[, 2:7]) %>% 
   mutate(mode = "neg",
          Identity_mode = paste0("neg_", Identity)) %>%
   relocate(c("mode", "Identity_mode"), .before = "Identity")
@@ -351,7 +372,7 @@ colnames(data) <- features$Identity
 # IS
 if (nrow(peaks.is > 0)){
   mzrt.is.filtered <-
-    filter_peaks( peaktable = peaks.is,
+    filter_peaks_summary( peaktable = peaks.is,
                   sample.type = sample.info.neg$Sample.type,
                   rsd.filter = c(),
                   mean.filter = c(),
@@ -362,7 +383,7 @@ if (nrow(peaks.is > 0)){
   
   
   features.is <- 
-    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, -1])
+    cbind( peaks.is.filtered[, c("mz", "rt", "Identity")], mzrt.is.filtered$summary[, 2:7])
   
   data.is <- 
     t(peaks.is.filtered[, !colnames(peaks.is.filtered) %in% c("mz", "rt", "Identity")]) %>%
@@ -378,7 +399,7 @@ if (nrow(peaks.is > 0)){
 # Peaks
 data.impute <- 
   impute_various_methods( data,
-                          method = "LoD"
+                          method = "min"
   )
 
 data <- data.impute$x
@@ -388,7 +409,7 @@ if (nrow(peaks.is > 0)){
 
   data.impute.is <- 
     impute_various_methods( data.is,
-                            method = "LoD"
+                            method = "min"
     )
   
   data.is <- data.impute.is$x
@@ -397,18 +418,27 @@ if (nrow(peaks.is > 0)){
 
 #### 4 Normalization
 ```{r neg normalization, eval = run.neg}
+## Calculate group mean after imputation and before norm
+data.summary.impute.grp <-
+  calculate_summary( data = data.impute$x,
+                 type = sample.info.neg$Group,
+                 names.suffix = "impute")
+
+## Normalization
 data.norm <- 
   apply(data, 2, function(x) t(x / data.is)) %>%
   as.data.frame()
 
-data.rsd <-
-  calculate_rsd( data = data.norm,
-                 type = sample.info.neg$Sample.type,
-                 names.suffix = "norm.rsd")$type.rsd
+## Calculate group mean after norm
+data.summary.norm.grp <-
+  calculate_summary( data = data.norm,
+                 type = sample.info.neg$Group,
+                 names.suffix = "norm")
 
 features.neg <-
   features %>%
-  left_join(data.rsd, by = "Identity")
+  left_join(data.summary.impute.grp$type.mean, by = "Identity") %>%
+  left_join(data.summary.norm.grp$type.mean, by = "Identity")
 
 data.neg <- 
   cbind(sample.info.neg[, c("Sample.name", "Group")], data.norm) %>% 
@@ -417,6 +447,28 @@ data.neg <-
 ```
 
 ### Merge POS and NEG
+#### Check file names from positive and negative mode
+```{r}
+samples.pos <- sample.info.pos
+names(samples.pos) <- paste0(names(sample.info.pos), ".pos")
+
+samples.neg <- sample.info.neg
+names(samples.neg) <- paste0(names(sample.info.neg), ".neg")
+
+all_samples <- 
+  samples.pos %>% 
+  full_join(samples.neg, by = c("Sample.name.pos" = "Sample.name.neg")) %>% 
+  rename(Sample.name = Sample.name.pos) %>% 
+  mutate(pos_file = !is.na(File.name.pos),
+         neg_file = !is.na(File.name.neg))
+
+check_samples <- 
+  all_samples %>% filter(!(pos_file & neg_file))
+
+check_samples
+```
+
+#### Merge
 Merge features from positive and negative mode into the same table
 ```{r merge}
 
@@ -451,6 +503,17 @@ datalist <- list(data = data.output,
 
 ```
 
+#### Check permeation features
+```{r}
+if (!is.null(permeation.features)){
+  check_perm <- 
+    data.frame(Identity_mode = permeation.features) %>% 
+    left_join(datalist$features, by = "Identity_mode")
+  
+  check_perm
+}
+```
+
 ```{r export clean table}
 output.file <- paste0(path.result, "peaktable_cleaned.xlsx")
 
@@ -459,6 +522,12 @@ addWorksheet(wb, "peaktable")
 writeData(wb, "peaktable", datalist$data)
 addWorksheet(wb, "features")
 writeData(wb, "features", datalist$features)
+addWorksheet(wb, "check_samples")
+writeData(wb, "check_samples", check_samples)
+if (!is.null(permeation.features)){
+  addWorksheet(wb, "permeation_features")
+  writeData(wb, "permeation_features", check_perm)
+}
 saveWorkbook(wb, file = output.file, overwrite = TRUE)
 
 saveRDS(datalist, file = paste0(path.result, "peaktable_cleaned.rds"))
@@ -491,21 +560,22 @@ colnames(dv) <- m_names
 data <- cbind(sample.info, dv)
 ```
 
-Output table and figures are stored in 'path.result'. If in media, the feature has mean value > 500, then it is considered to exist in media. Fold change threshold is 2.
+Output table and figures are stored in 'path.result'. If in media, the feature has 
+mean value > 500, then it is considered to exist in media. Fold change threshold is 2.
 Controlled by:
 media.thres = 500
 FC_thres = 2
 path.result = path.result
-```{r analysis}
 
-run_analysis(data = data,
+### Volcano plot
+```{r}
+run_analysis_plot_permeation(data = data,
              media.thres = 500,
              FC_thres = 2,
+             permeation.features = NULL,
              path.result = path.result,
              map.names = map.names,
+             feature.info = feature.info,
              max.overlaps = 7,
-             feature.info = feature.info)
-
+             bubble = FALSE)
 ```
-
-
