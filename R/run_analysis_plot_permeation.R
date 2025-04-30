@@ -85,8 +85,9 @@ run_analysis_plot_permeation <- function(data = NULL,
                                  paste0("mean.", i, ".norm"))],
                 by = c("variable" = "Identity_mode")) %>%
       rename(mean.cell = paste0("mean.", i, ".impute"),
-             mean.cell.norm = paste0("mean.", i, ".norm")) %>%
-      mutate(In_media = mean.MEDIA > media.thres,
+             mean.cell.norm = paste0("mean.", i, ".norm"),
+             mean.MEDIA.raw = mean.MEDIA) %>%
+      mutate(In_media = mean.MEDIA.raw > media.thres,
              FC_over_thres = FC > FC_thres,
              Presence_in_media = case_when( In_media & FC_over_thres & adj.p.value < p.cut.off ~ "Present",
                                             !In_media & FC_over_thres & adj.p.value < p.cut.off ~ "Absent",
