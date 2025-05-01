@@ -456,7 +456,8 @@ all_samples <-
   full_join(samples.neg, by = c("Sample.name.pos" = "Sample.name.neg")) %>% 
   rename(Sample.name = Sample.name.pos) %>% 
   mutate(pos_file = !is.na(File.name.pos),
-         neg_file = !is.na(File.name.neg))
+         neg_file = !is.na(File.name.neg)) %>% 
+  relocate(Sample.name, .before = 1)
 
 check_samples <- 
   all_samples %>% filter(!(pos_file & neg_file))
