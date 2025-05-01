@@ -80,14 +80,15 @@ run_analysis_plot_permeation <- function(data = NULL,
       mutate(Gene = gsub("Group", "", Gene),
              FC = 2^log2FC,
              log10p = -log10(adj.p.value)) %>%
-      left_join(feature.info[, c("Identity_mode","mean.MEDIA","mean.MEDIA.norm",
+      left_join(feature.info[, c("Identity_mode", "mean.MEDIA", "mean.MEDIA.norm",
                                  paste0("mean.", i, ".impute"),
                                  paste0("mean.", i, ".norm"))],
                 by = c("variable" = "Identity_mode")) %>%
-      rename(mean.cell = paste0("mean.", i, ".impute"),
+      rename(mean.cell.impute = paste0("mean.", i, ".impute"),
              mean.cell.norm = paste0("mean.", i, ".norm"),
              mean.MEDIA.raw = mean.MEDIA) %>%
-      mutate(In_media = mean.MEDIA.raw > media.thres,
+      mutate(In_media = ifelse(!is.na(mean.MEDIA.raw) & mean.MEDIA.raw > media.thres,
+                               TRUE, FALSE),
              FC_over_thres = FC > FC_thres,
              Presence_in_media = case_when( In_media & FC_over_thres & adj.p.value < p.cut.off ~ "Present",
                                             !In_media & FC_over_thres & adj.p.value < p.cut.off ~ "Absent",
